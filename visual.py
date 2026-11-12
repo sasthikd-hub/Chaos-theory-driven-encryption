@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image
 from pendulum import make_mask
 
-st.title("UHMMM,TBD")
+st.title("Chaos theory driven image encryption")
 st.write("Scramble and restore an image using a simulated double pendulum.")
 
 st.sidebar.header("Physics key")
