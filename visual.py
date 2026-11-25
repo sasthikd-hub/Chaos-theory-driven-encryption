@@ -1,9 +1,13 @@
+import hashlib
+from io import BytesIO
+
 import streamlit as st
 import numpy as np
 from PIL import Image
+from PIL.PngImagePlugin import PngInfo
 from pendulum import make_mask
 
-st.title("UHMMM,TBD")
+st.title("Chaos Theory Image Encryption")
 st.write("Scramble and restore an image using a simulated double pendulum.")
 
 st.sidebar.header("Physics key")
@@ -25,7 +29,28 @@ if uploaded_file is not None:
         byte_count=pixels.size)
         mask_array = np.frombuffer(mask, dtype=np.uint8).reshape(pixels.shape)
         encrypted_pixels = np.bitwise_xor(pixels, mask_array)
+        image_id_source = encrypted_pixels.tobytes() + str(pixels.shape).encode("utf-8")
+        image_id = f"CHAOS-{hashlib.sha256(image_id_source).hexdigest()[:12].upper()}"
+
+        png_metadata = PngInfo()
+        png_metadata.add_text("chaos_image_id", image_id)
+        encrypted_png = BytesIO()
+        Image.fromarray(encrypted_pixels).save(
+            encrypted_png,
+            format="PNG",
+            pnginfo=png_metadata,
+        )
 
         original_col, encrypted_col = st.columns(2)
         original_col.image(pixels, caption="Original photo")
         encrypted_col.image(encrypted_pixels, caption="Scrambled photo")
+
+        st.subheader("Encrypted image reference")
+        st.code(image_id)
+        st.caption("Share this ID with the receiving team. It is also stored in the downloaded PNG.")
+        st.download_button(
+            "Download encrypted PNG",
+            data=encrypted_png.getvalue(),
+            file_name=f"{image_id}.png",
+            mime="image/png",
+        )
